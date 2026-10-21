@@ -69,8 +69,8 @@ cleanup. Do not run other location tools against the same phone simultaneously.
 
 ```sh
 ./Launch.command list
-./Launch.command set '1.3291521175946346, 103.7764896710236'
-./Launch.command set -- -33.8568 151.2153
+./Launch.command set 'long, lat'
+./Launch.command set -- -xx xx
 ./Launch.command clear
 ```
 
