@@ -13,7 +13,7 @@ Python 3.10 or newer must be installed on the Mac; first setup needs internet.
 2. Enable **Settings → Privacy & Security → Developer Mode** on the iPhone.
 3. Click **Refresh** and select your USB iPhone if more than one is attached.
 4. Paste a coordinate pair into the single field, for example:
-   `1.3291521175946346, 103.7764896710236`.
+   `29.9792458, 31.134094`.
 5. Click **Start Location**. Keep the cable connected and the Mac lid open.
 6. Click **Stop & Restore** when finished. Verify the real location in iPhone Maps.
 
