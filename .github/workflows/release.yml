@@ -2,8 +2,8 @@ name: Audit, build, and release
 
 on:
   push:
-    branches: [main]
-    paths: [VERSION]
+    branches: [main, ui-refresh]
+    paths: [VERSION, 'NativeApp/**', build_app.py, '.github/workflows/release.yml']
   workflow_dispatch:
 
 permissions:
@@ -38,6 +38,21 @@ jobs:
         run: zsh -n Launch.command NativeApp/bootstrap.sh
       - name: Build app and run native coordinate checks
         run: python3 build_app.py
+      - name: Render native UI states
+        run: |
+          'Cable Location.app/Contents/MacOS/CableLocation' --render-previews .build/previews
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          for name in ('ready', 'compact', 'error'):
+              data = (Path('.build/previews') / f'{name}.png').read_bytes()
+              print(f'PREVIEW_BEGIN:{name}:' + base64.b64encode(data).decode() + ':PREVIEW_END')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-ui-previews
+          path: .build/previews/*.png
+          if-no-files-found: error
       - name: Verify signature and package app
         run: |
           codesign --verify --deep --strict --verbose=2 'Cable Location.app'
@@ -54,7 +69,7 @@ jobs:
 
   publish:
     needs: audit-build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release '))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
