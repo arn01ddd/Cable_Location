@@ -7,6 +7,7 @@ import subprocess
 import struct
 
 root = Path(__file__).resolve().parent
+app_version = (root / "VERSION").read_text().strip()
 app = root / "Cable Location.app"
 contents = app / "Contents"
 binary = contents / "MacOS"
@@ -23,8 +24,8 @@ plist = {
     "CFBundleName": "Cable Location",
     "CFBundleDisplayName": "Cable Location",
     "CFBundlePackageType": "APPL",
-    "CFBundleShortVersionString": "2.1.0",
-    "CFBundleVersion": "3",
+    "CFBundleShortVersionString": app_version,
+    "CFBundleVersion": "4",
     "LSMinimumSystemVersion": "14.0",
     "NSHighResolutionCapable": True,
     "NSHumanReadableCopyright": "Cable Location",
@@ -32,8 +33,8 @@ plist = {
 }
 with (contents / "Info.plist").open("wb") as f:
     plistlib.dump(plist, f)
-cache = root.parents[1] / "work/app-build"
-cache.mkdir(exist_ok=True)
+cache = root / ".build"
+cache.mkdir(parents=True, exist_ok=True)
 subprocess.run([
     "xcrun", "swiftc", "-swift-version", "5", "-O", "-parse-as-library",
     "-target", "arm64-apple-macosx14.0", "-module-cache-path", str(cache),
@@ -53,5 +54,7 @@ for kind, name in ((b"ic07", "icon_128x128.png"), (b"ic08", "icon_256x256.png"),
 payload = b"".join(chunks)
 (resources / "AppIcon.icns").write_bytes(b"icns" + struct.pack(">I", len(payload) + 8) + payload)
 subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)
-subprocess.run([str(binary / "CableLocation"), "--self-test"], check=True)
+subprocess.run([str(binary / "CableLocation"), "--self-test", "--coordinate-cases",
+                str(root / "tests/coordinate_cases.json")], check=True)
 print(f"Built {app}")
+

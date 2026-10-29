@@ -1,0 +1,82 @@
+name: Audit, build, and release
+
+on:
+  push:
+    branches: [main]
+    paths: [VERSION]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cable-location-release
+  cancel-in-progress: false
+
+jobs:
+  audit-build:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Check release version and runner
+        run: |
+          test "$(uname -m)" = arm64
+          python3 -c 'import pathlib, re; assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", pathlib.Path("VERSION").read_text().strip())'
+      - name: Install backend and audit tool
+        run: python3 -m pip install -r requirements.txt pip-audit
+      - name: Audit dependency advisories
+        run: python3 -m pip_audit -r requirements.txt --strict
+      - name: Test coordinates and session controller
+        run: python3 -m unittest discover -s tests -v
+      - name: Check launcher syntax
+        run: zsh -n Launch.command NativeApp/bootstrap.sh
+      - name: Build app and run native coordinate checks
+        run: python3 build_app.py
+      - name: Verify signature and package app
+        run: |
+          codesign --verify --deep --strict --verbose=2 'Cable Location.app'
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent 'Cable Location.app' dist/CableLocation-macOS-arm64.zip
+          cd dist
+          shasum -a 256 CableLocation-macOS-arm64.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: macOS-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: audit-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: macOS-release
+          path: dist
+      - name: Verify download and publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd dist
+          sha256sum -c SHA256SUMS.txt
+          cd ..
+          version="$(cat VERSION)"
+          tag="v${version}"
+          gh release create "$tag" --target "$GITHUB_SHA" --title "Cable Location $version" --notes-file RELEASE_NOTES.md --draft
+          gh release upload "$tag" dist/CableLocation-macOS-arm64.zip dist/SHA256SUMS.txt
+          gh release edit "$tag" --draft=false --latest

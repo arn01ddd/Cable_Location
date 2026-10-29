@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import signal
 import subprocess
@@ -11,6 +12,16 @@ import cable_location as app
 
 
 class CableLocationTests(unittest.TestCase):
+    def test_shared_native_and_backend_coordinate_cases(self):
+        cases = json.loads(Path(__file__).with_name("coordinate_cases.json").read_text())
+        for case in cases:
+            with self.subTest(input=case["input"]):
+                if case["valid"]:
+                    app.coordinate_pair(case["input"])
+                else:
+                    with self.assertRaises(app.LocationError):
+                        app.coordinate_pair(case["input"])
+
     def test_coordinate_bounds_and_nonfinite(self):
         self.assertEqual(app.coordinate("-90", 90), -90)
         self.assertEqual(app.coordinate("180", 180), 180)
@@ -94,3 +105,4 @@ class CableLocationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

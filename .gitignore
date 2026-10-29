@@ -1,0 +1,8 @@
+.venv/
+.build/
+__pycache__/
+*.py[cod]
+*.app/
+dist/
+.session.lock
+.DS_Store

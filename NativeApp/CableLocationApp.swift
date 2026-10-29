@@ -4,9 +4,17 @@ import Combine
 
 enum CoordinateInput {
     static func valid(_ input: String) -> Bool {
-        let cleaned = input.trimmingCharacters(in: .whitespacesAndNewlines)
-            .trimmingCharacters(in: CharacterSet(charactersIn: "()"))
-        let parts = cleaned.split(whereSeparator: { $0 == "," || $0.isWhitespace })
+        var cleaned = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("(") && cleaned.hasSuffix(")") {
+            cleaned.removeFirst()
+            cleaned.removeLast()
+            cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let parts = cleaned.contains(",")
+            ? cleaned.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            : cleaned.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        let decimal = #"^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$"#
+        guard parts.allSatisfy({ $0.range(of: decimal, options: .regularExpression) != nil }) else { return false }
         guard parts.count == 2, let lat = Double(parts[0]), let lon = Double(parts[1]) else { return false }
         return lat.isFinite && lon.isFinite && abs(lat) <= 90 && abs(lon) <= 180
     }
@@ -407,10 +415,11 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 8) {
                     Image(systemName: "location").font(.system(size: 12)).foregroundStyle(validInput ? Palette.mint : Palette.muted)
-                    TextField("1.329152, 103.776490", text: $model.coordinates)
+                    TextField("Latitude, Longitude", text: $model.coordinates)
                         .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                         .foregroundStyle(Palette.ink).disabled(model.busy).onSubmit { model.start() }
                         .accessibilityLabel("Latitude, longitude")
+                        .help("Enter decimal degrees, latitude first. Use a minus sign for south or west.")
                     if validInput { Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.mint).font(.system(size: 13)) }
                 }.padding(14).background(Palette.background, in: RoundedRectangle(cornerRadius: 10))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(validInput ? Palette.mint.opacity(0.4) : Palette.line))
@@ -541,6 +550,15 @@ struct CableLocationApp: App {
             let valid = ["1.3291521175946346, 103.7764896710236", "-33.86, -151.2", "(1, 2)", "1 2"]
             let invalid = ["nan, 1", "91, 0", "0, 181", "1", "1,2,3", "inf, 0"]
             guard valid.allSatisfy(CoordinateInput.valid), invalid.allSatisfy({ !CoordinateInput.valid($0) }) else { exit(1) }
+            if let index = CommandLine.arguments.firstIndex(of: "--coordinate-cases") {
+                guard CommandLine.arguments.indices.contains(index + 1),
+                      let data = try? Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[index + 1])),
+                      let cases = try? JSONDecoder().decode([CoordinateCase].self, from: data) else { exit(1) }
+                for item in cases where CoordinateInput.valid(item.input) != item.valid {
+                    print("Coordinate validation mismatch: \(item.input)")
+                    exit(1)
+                }
+            }
             print("Native coordinate validation passed.")
             exit(0)
         }
@@ -559,3 +577,9 @@ struct CableLocationApp: App {
         .commands { CommandGroup(replacing: .newItem) {} }
     }
 }
+
+private struct CoordinateCase: Decodable {
+    let input: String
+    let valid: Bool
+}
+

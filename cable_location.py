@@ -24,19 +24,25 @@ class LocationError(Exception):
 
 
 def coordinate(value: str, limit: float) -> float:
+    if not re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", value):
+        raise LocationError("Enter a coordinate in decimal degrees.")
     try:
         number = float(value)
     except ValueError:
-        raise LocationError("Enter a decimal coordinate, such as 1.2834.") from None
+        raise LocationError("Enter a coordinate in decimal degrees.") from None
     if not math.isfinite(number) or not -limit <= number <= limit:
         raise LocationError(f"Coordinate must be between {-limit:g} and {limit:g}.")
     return number
 
 
 def coordinate_pair(value: str) -> tuple[float, float]:
-    parts = re.split(r"\s*,\s*|\s+", value.strip().strip("()").strip())
+    cleaned = value.strip()
+    if cleaned.startswith("(") and cleaned.endswith(")"):
+        cleaned = cleaned[1:-1].strip()
+    parts = ([part.strip() for part in cleaned.split(",")] if "," in cleaned
+             else cleaned.split())
     if len(parts) != 2:
-        raise LocationError("Paste latitude, longitude — for example: 1.3291521175946346, 103.7764896710236")
+        raise LocationError("Enter latitude, longitude in decimal degrees.")
     return coordinate(parts[0], 90), coordinate(parts[1], 180)
 
 
@@ -265,3 +271,4 @@ if __name__ == "__main__":
     for sig in (signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, interrupted)
     sys.exit(main())
+

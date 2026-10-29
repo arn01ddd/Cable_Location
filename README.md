@@ -1,10 +1,15 @@
-# Cable Location 2.1
+# Cable Location 2.1.1
 
 A native Apple silicon Mac app for simulating a cable-connected iPhone's location.
 
+Download the app ZIP from [GitHub Releases](https://github.com/arn01ddd/Cable_Location/releases/latest).
+Release changes are in [RELEASE_NOTES.md](RELEASE_NOTES.md); audit scope and limits
+are in [AUDIT.md](AUDIT.md).
+
 ## Open the app
 
-Double-click **Cable Location.app** in this folder. Your existing private Python
+Extract the release ZIP and double-click **Cable Location.app**. When building
+from source, run `python3 build_app.py` on your Mac first. Your existing private Python
 environment is reused when available. If you move the app elsewhere, its first
 launch creates a private runtime in `~/Library/Application Support/Cable Location/`.
 Python 3.10 or newer must be installed on the Mac; first setup needs internet.
@@ -12,8 +17,8 @@ Python 3.10 or newer must be installed on the Mac; first setup needs internet.
 1. Connect the iPhone using a data-capable USB-C cable, unlock it, and trust the Mac.
 2. Enable **Settings → Privacy & Security → Developer Mode** on the iPhone.
 3. Click **Refresh** and select your USB iPhone if more than one is attached.
-4. Paste a coordinate pair into the single field, for example:
-   `29.9792458, 31.134094`.
+4. Paste a coordinate pair in the field marked **Latitude, Longitude**.
+   Use decimal degrees, latitude first, with a minus sign for south or west.
 5. Click **Start Location**. Keep the cable connected and the Mac lid open.
 6. Click **Stop & Restore** when finished. Verify the real location in iPhone Maps.
 
@@ -69,12 +74,15 @@ cleanup. Do not run other location tools against the same phone simultaneously.
 
 ```sh
 ./Launch.command list
-./Launch.command set 'long, lat'
-./Launch.command set -- -xx xx
+./Launch.command set '<latitude>, <longitude>'
+./Launch.command set -- <latitude> <longitude>
 ./Launch.command clear
 ```
 
 Press **Control-C** to stop and request restoration in Terminal.
+Replace the angle-bracket labels with decimal coordinate values. Use the `--`
+form when passing separate negative values. If the source launcher is not
+executable, run it with `zsh Launch.command`.
 
 ## Source and verification
 
@@ -94,7 +102,7 @@ Upstream references:
 [async USB tunnel](https://github.com/doronz88/pymobiledevice3/blob/master/pymobiledevice3/remote/userspace_tunnel.py),
 [iOS developer support](https://github.com/doronz88/pymobiledevice3/blob/master/docs/guides/cli-recipes.md).
 
-## Verification on this Mac
+## Previous hardware verification (2.1)
 
 The native interface was opened and tested with the connected USB iPhone. It
 accepted 75 consecutive coordinate refreshes over more than a minute, followed by
@@ -109,3 +117,12 @@ Version 2.1 adds a midnight blue and mint interface, a custom cable-pin logo,
 and a separate session monitor. The vector mark is in `Brand/Logo.svg`; the
 1024-pixel app icon is in `Brand/AppIcon.png`. Both are generated from editable
 code, with matching marks in the app header and session display.
+
+## Release verification (2.1.1)
+
+The destination field now uses a generic format hint. Native and Python
+validation share 35 coordinate cases. Fifteen Python tests passed in the Linux
+workspace; macOS compilation, native checks, dependency advisory scanning, and
+signature verification are required by the release workflow before publication.
+This update has not been tested with a physical iPhone.
+
