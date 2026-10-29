@@ -101,7 +101,9 @@ struct ContentView: View {
     private var validInput: Bool { CoordinateInput.valid(model.coordinates) }
     private var invalidInput: Bool { !model.coordinates.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !validInput }
     private var attention: Bool { model.failed || model.stopping || model.updateIsStale }
-    private var statusColor: Color { attention ? Palette.warning : Palette.accent }
+    private var statusColor: Color {
+        attention ? Palette.warning : (model.hasDevice && model.ready ? Palette.accent : Palette.muted)
+    }
     private var statusBackground: Color { attention ? Palette.warningBackground : Palette.soft }
 
     private func eyebrow(_ text: String, color: Color = Palette.muted) -> some View {
@@ -199,18 +201,23 @@ struct ContentView: View {
                 Label("Destination", systemImage: "mappin.and.ellipse")
                     .font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
                 Spacer()
-                Text("DECIMAL DEGREES").font(.system(size: 11, weight: .semibold))
+                Text("DECIMAL DEGREES").font(.system(size: 12, weight: .semibold))
                     .tracking(1).foregroundStyle(Palette.muted)
             }
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     Image(systemName: "location").font(.system(size: 18))
                         .foregroundStyle(coordinateFocused ? Palette.accent : Palette.muted).accessibilityHidden(true)
-                    TextField("Latitude, Longitude", text: $model.coordinates,
-                              prompt: Text("Latitude, Longitude").foregroundColor(Palette.muted))
+                    TextField("", text: $model.coordinates)
                         .textFieldStyle(.plain).font(.system(size: 17, design: .monospaced))
                         .foregroundStyle(Palette.ink).focused($coordinateFocused).disabled(model.busy)
                         .onSubmit { model.start() }.accessibilityLabel("Destination latitude and longitude")
+                        .overlay(alignment: .leading) {
+                            if model.coordinates.isEmpty {
+                                Text("Latitude, Longitude").font(.system(size: 17, design: .monospaced))
+                                    .foregroundStyle(Palette.muted).allowsHitTesting(false).accessibilityHidden(true)
+                            }
+                        }
                         .help("Decimal degrees, latitude first. Use a minus sign for south or west.")
                     if validInput {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.accent)

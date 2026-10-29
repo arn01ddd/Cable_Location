@@ -10,6 +10,52 @@ import worker
 
 
 class RefreshTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cancelled_session_cleans_tunnel_and_reports_final_restore_result(self):
+        for restore_fails in (False, True):
+            with self.subTest(restore_fails=restore_fails):
+                entered = asyncio.Event()
+                stop = asyncio.Event()
+                closed = []
+                events = []
+                location = AsyncMock()
+
+                async def pending_update(*args):
+                    entered.set()
+                    await asyncio.Event().wait()
+
+                location.set.side_effect = pending_update
+
+                class Context:
+                    def __init__(self, name, value):
+                        self.name, self.value = name, value
+                    async def __aenter__(self):
+                        return self.value
+                    async def __aexit__(self, *args):
+                        closed.append(self.name)
+
+                modules = {
+                    "pymobiledevice3.remote.userspace_tunnel": SimpleNamespace(
+                        UserspaceRsdTunnel=lambda **kw: Context("tunnel", object())),
+                    "pymobiledevice3.services.dvt.instruments.dvt_provider": SimpleNamespace(
+                        DvtProvider=lambda rsd: Context("dvt", object())),
+                    "pymobiledevice3.services.dvt.instruments.location_simulation": SimpleNamespace(
+                        LocationSimulation=lambda dvt: Context("location", location)),
+                }
+                clear = AsyncMock(side_effect=ConnectionError("disconnected") if restore_fails else None)
+                with patch.dict(sys.modules, modules), patch.object(worker, "prepare", new=AsyncMock()), \
+                        patch.object(worker, "require_usb", new=AsyncMock()), \
+                        patch.object(worker, "cli", new=clear), \
+                        patch.object(worker, "emit", side_effect=lambda event, **kw: events.append(event)):
+                    task = asyncio.create_task(worker.hold("phone", "0, 0", 1, stop))
+                    await asyncio.wait_for(entered.wait(), timeout=1)
+                    stop.set()
+                    task.cancel()
+                    with self.assertRaises(asyncio.CancelledError):
+                        await asyncio.wait_for(task, timeout=1)
+                self.assertEqual(closed, ["location", "dvt", "tunnel"])
+                clear.assert_awaited_once()
+                self.assertEqual(events[-1], "restore_failed" if restore_fails else "restored")
+
     async def test_refresh_repeats_without_blocking_transport_event_loop(self):
         stop = asyncio.Event()
         ticks = []
@@ -110,3 +156,4 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

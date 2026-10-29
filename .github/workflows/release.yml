@@ -44,7 +44,7 @@ jobs:
           python3 - <<'PY'
           import base64
           from pathlib import Path
-          for name in ('ready', 'compact', 'error'):
+          for name in ('empty', 'ready', 'active', 'compact', 'error'):
               data = (Path('.build/previews') / f'{name}.png').read_bytes()
               print(f'PREVIEW_BEGIN:{name}:' + base64.b64encode(data).decode() + ':PREVIEW_END')
           PY

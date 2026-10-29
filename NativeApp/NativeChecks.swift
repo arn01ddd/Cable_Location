@@ -30,6 +30,9 @@ enum NativeChecks {
         check(!model.canStart && !model.canRestore, "Unknown selection must not enable actions")
         model.receive("{\"event\":\"devices\",\"devices\":[\"phone\"]}\n", json: true)
         check(model.selected == "phone" && model.canStart && model.canRestore, "Auto-select the only USB phone")
+        model.coordinates = "invalid"
+        check(!model.canStart && model.canRestore, "Invalid input must not prevent real-location restoration")
+        model.coordinates = "0, 0"
         model.busy = true
         check(!model.canStart && !model.canRestore, "Busy operations must disable competing actions")
         model.holding = true

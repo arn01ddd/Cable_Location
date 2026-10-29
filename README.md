@@ -1,4 +1,4 @@
-# Cable Location 2.1.1
+# Cable Location 2.2.0
 
 A native Apple silicon Mac app for simulating a cable-connected iPhone's location.
 
@@ -86,7 +86,9 @@ executable, run it with `zsh Launch.command`.
 
 ## Source and verification
 
-- `NativeApp/CableLocationApp.swift`: native SwiftUI interface and process controller.
+- `NativeApp/CableLocationApp.swift`: native app lifecycle and process controller.
+- `NativeApp/Interface.swift`: SwiftUI workspace and design tokens.
+- `NativeApp/NativeChecks.swift`: native state/contrast checks and preview renderer.
 - `NativeApp/bootstrap.sh`: private Python runtime preparation.
 - `worker.py`: async USB session, one-second refresh, reconnect, and restoration.
 - `cable_location.py`: Terminal interface and shared coordinate validation.
@@ -111,18 +113,28 @@ the blue dot in iPhone Maps was not inspected. Fourteen automated tests passed,
 including an event-loop responsiveness test and recovery after a simulated USB
 connection failure. Native coordinate-validation checks also passed.
 
-## Visual identity
+## Interface
 
-Version 2.1 adds a midnight blue and mint interface, a custom cable-pin logo,
-and a separate session monitor. The vector mark is in `Brand/Logo.svg`; the
-1024-pixel app icon is in `Brand/AppIcon.png`. Both are generated from editable
-code, with matching marks in the app header and session display.
+Version 2.2 uses a deep green device sidebar and a bright workspace, with larger
+type, clear input feedback, a compact session summary, and a resizable window.
+The destination uses the generic **Latitude, Longitude** format hint. Errors and
+stale updates have explicit labels; Restore remains available with an empty or
+invalid destination. Command-R refreshes devices; Command-Return starts a valid
+session. Diagnostics expands below the session summary.
 
-## Release verification (2.1.1)
+The cable-pin vector mark is in `Brand/Logo.svg`; the generated app icon is in
+`Brand/AppIcon.png`. Render five native interface states without a phone:
 
-The destination field now uses a generic format hint. Native and Python
-validation share 35 coordinate cases. Fifteen Python tests passed in the Linux
-workspace; macOS compilation, native checks, dependency advisory scanning, and
-signature verification are required by the release workflow before publication.
+```sh
+'Cable Location.app/Contents/MacOS/CableLocation' --render-previews .build/previews
+```
+
+## Release verification (2.2.0)
+
+Sixteen Python tests cover coordinate validation, session control, and cleanup.
+Sixty native assertions include 35 shared coordinate cases, UI state transitions,
+action availability, and text-color contrast. The release workflow builds on an
+Apple silicon Mac, captures five native interface states, audits dependency
+advisories, and verifies the signature and ZIP checksum before publication.
 This update has not been tested with a physical iPhone.
 
