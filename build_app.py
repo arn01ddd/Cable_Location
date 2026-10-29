@@ -25,7 +25,7 @@ plist = {
     "CFBundleDisplayName": "Cable Location",
     "CFBundlePackageType": "APPL",
     "CFBundleShortVersionString": app_version,
-    "CFBundleVersion": "5",
+    "CFBundleVersion": "6",
     "LSMinimumSystemVersion": "14.0",
     "NSHighResolutionCapable": True,
     "NSHumanReadableCopyright": "Cable Location",

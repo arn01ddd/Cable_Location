@@ -59,15 +59,24 @@ enum NativeChecks {
         check(model.selected.isEmpty && !model.canStart, "Multiple phones require explicit selection")
 
         let textPairs: [(UInt32, UInt32)] = [
-            (Palette.inkHex, 0xFFFFFF), (Palette.mutedHex, Palette.canvasHex),
-            (Palette.mutedHex, 0xFFFFFF), (Palette.accentHex, 0xE8F2EC),
-            (Palette.sidebarMutedHex, Palette.sidebarHex), (0xADF0CE, Palette.sidebarHex),
-            (0xFFFFFF, Palette.inkHex), (Palette.warningHex, 0xFFF2DD),
-            (Palette.dangerHex, 0xFFFFFF), (Palette.mutedHex, 0xE3EAE5)
+            (Palette.inkHex, Palette.surfaceHex), (Palette.inkHex, Palette.canvasHex),
+            (Palette.mutedHex, Palette.surfaceHex), (Palette.mutedHex, Palette.canvasHex),
+            (Palette.mutedHex, Palette.inputHex), (Palette.accentHex, Palette.softHex),
+            (Palette.mutedHex, Palette.softHex), (Palette.sidebarMutedHex, Palette.sidebarHex),
+            (Palette.sidebarMutedHex, Palette.sidebarCardHex), (0xFFFFFF, Palette.sidebarCardHex),
+            (Palette.accentHex, Palette.sidebarHex), (Palette.accentHex, Palette.sidebarSelectionHex),
+            (Palette.inkHex, Palette.secondaryHex), (Palette.mutedHex, Palette.disabledHex),
+            (Palette.buttonInkHex, Palette.accentHex), (Palette.buttonInkHex, Palette.warningHex),
+            (Palette.warningHex, Palette.warningBackgroundHex), (Palette.warningHex, Palette.surfaceHex),
+            (Palette.dangerHex, Palette.surfaceHex), (Palette.dangerHex, Palette.inputHex)
         ]
         for (foreground, background) in textPairs {
             check(contrast(foreground, background) >= 4.5, "Normal text contrast must reach 4.5:1")
         }
+        for background in [Palette.surfaceHex, Palette.inputHex, Palette.secondaryHex] {
+            check(contrast(Palette.controlLineHex, background) >= 3, "Control boundary contrast must reach 3:1")
+        }
+        check(contrast(Palette.accentHex, Palette.inputHex) >= 3, "Input focus contrast must reach 3:1")
         print("Native checks passed: \(count) assertions, including \(cases.count) shared coordinate cases and text contrast.")
     }
 

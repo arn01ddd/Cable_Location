@@ -2,7 +2,7 @@ name: Audit, build, and release
 
 on:
   push:
-    branches: [main, ui-refresh]
+    branches: [main, ui-refresh, navy-theme]
     paths: [VERSION, 'NativeApp/**', build_app.py, '.github/workflows/release.yml']
   workflow_dispatch:
 

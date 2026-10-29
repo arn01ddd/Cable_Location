@@ -9,27 +9,43 @@ extension Color {
 }
 
 enum Palette {
-    static let canvasHex: UInt32 = 0xF3F6F4
-    static let inkHex: UInt32 = 0x182D29
-    static let mutedHex: UInt32 = 0x52665F
-    static let accentHex: UInt32 = 0x146650
-    static let sidebarHex: UInt32 = 0x142E2A
-    static let sidebarMutedHex: UInt32 = 0xB9CEC6
-    static let warningHex: UInt32 = 0x814A09
-    static let dangerHex: UInt32 = 0xAB3046
+    static let canvasHex: UInt32 = 0x090F1C
+    static let surfaceHex: UInt32 = 0x111C2E
+    static let inputHex: UInt32 = 0x0B1424
+    static let inkHex: UInt32 = 0xEDF3FF
+    static let mutedHex: UInt32 = 0xA7B7D0
+    static let accentHex: UInt32 = 0x8FB8FF
+    static let sidebarHex: UInt32 = 0x060B14
+    static let sidebarMutedHex: UInt32 = 0x9DAFCA
+    static let sidebarCardHex: UInt32 = 0x0E1928
+    static let sidebarSelectionHex: UInt32 = 0x152843
+    static let softHex: UInt32 = 0x162A48
+    static let secondaryHex: UInt32 = 0x15243A
+    static let disabledHex: UInt32 = 0x1C293D
+    static let buttonInkHex: UInt32 = 0x081426
+    static let controlLineHex: UInt32 = 0x61799B
+    static let warningHex: UInt32 = 0xFFD28A
+    static let warningBackgroundHex: UInt32 = 0x322716
+    static let dangerHex: UInt32 = 0xFF9CAF
     static let canvas = Color(hex: canvasHex)
+    static let surface = Color(hex: surfaceHex)
+    static let input = Color(hex: inputHex)
     static let ink = Color(hex: inkHex)
     static let muted = Color(hex: mutedHex)
     static let accent = Color(hex: accentHex)
     static let sidebar = Color(hex: sidebarHex)
     static let sidebarMuted = Color(hex: sidebarMutedHex)
-    static let mint = Color(hex: 0xADF0CE)
-    static let line = Color(hex: 0xDCE5DF)
-    static let soft = Color(hex: 0xE8F2EC)
+    static let sidebarCard = Color(hex: sidebarCardHex)
+    static let sidebarSelection = Color(hex: sidebarSelectionHex)
+    static let line = Color(hex: 0x293B55)
+    static let controlLine = Color(hex: controlLineHex)
+    static let soft = Color(hex: softHex)
+    static let secondary = Color(hex: secondaryHex)
+    static let disabled = Color(hex: disabledHex)
+    static let buttonInk = Color(hex: buttonInkHex)
     static let warning = Color(hex: warningHex)
     static let danger = Color(hex: dangerHex)
-    static let warningBackground = Color(hex: 0xFFF2DD)
-    static let dangerBackground = Color(hex: 0xFCEEF0)
+    static let warningBackground = Color(hex: warningBackgroundHex)
 }
 
 struct CableMark: Shape {
@@ -55,7 +71,7 @@ struct CableMark: Shape {
 struct BrandMark: View {
     var size: CGFloat = 34
     var body: some View {
-        CableMark().stroke(Palette.mint, style: StrokeStyle(lineWidth: size * 0.065,
+        CableMark().stroke(Palette.accent, style: StrokeStyle(lineWidth: size * 0.065,
                                                            lineCap: .round, lineJoin: .round))
             .padding(size * 0.12).frame(width: size, height: size).accessibilityHidden(true)
     }
@@ -68,12 +84,13 @@ struct ActionStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(enabled ? (primary ? Color.white : Palette.ink) : Palette.muted)
+            .foregroundStyle(enabled ? (primary ? Palette.buttonInk : Palette.ink) : Palette.muted)
             .frame(maxWidth: .infinity).frame(height: 48)
-            .background(enabled && primary ? (destructive ? Palette.warning : Palette.ink) :
-                            (primary ? Color(hex: 0xE3EAE5) : Color.white),
+            .background(enabled && primary ? (destructive ? Palette.warning : Palette.accent) :
+                            (primary ? Palette.disabled : Palette.secondary),
                         in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(primary ? Color.clear : Palette.line))
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .stroke(primary ? Color.clear : (enabled ? Palette.controlLine : Palette.line)))
             .opacity(configuration.isPressed ? 0.78 : 1)
             .contentShape(RoundedRectangle(cornerRadius: 12))
     }
@@ -113,7 +130,7 @@ struct ContentView: View {
     private func guide(_ number: String, _ title: String, _ detail: String) -> some View {
         HStack(alignment: .top, spacing: 11) {
             Text(number).font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundStyle(Palette.mint).frame(width: 24, height: 24)
+                .foregroundStyle(Palette.accent).frame(width: 24, height: 24)
                 .overlay(Circle().stroke(Color.white.opacity(0.18)))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(.white)
@@ -137,8 +154,8 @@ struct ContentView: View {
                 Image(systemName: "location.fill").font(.system(size: 14))
                 Text("Location workspace").font(.system(size: 13, weight: .medium))
                 Spacer(minLength: 0)
-            }.foregroundStyle(Palette.mint).padding(13)
-                .background(Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+            }.foregroundStyle(Palette.accent).padding(13)
+                .background(Palette.sidebarSelection, in: RoundedRectangle(cornerRadius: 10))
 
             HStack {
                 eyebrow("YOUR DEVICE", color: Palette.sidebarMuted)
@@ -154,7 +171,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 12) {
                     Image(systemName: "iphone").font(.system(size: 27, weight: .light))
-                        .foregroundStyle(Palette.mint).frame(width: 38, height: 43)
+                        .foregroundStyle(Palette.accent).frame(width: 38, height: 43)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(model.hasDevice ? "iPhone selected" : "Connect an iPhone")
                             .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
@@ -178,7 +195,7 @@ struct ContentView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
+                .background(Palette.sidebarCard, in: RoundedRectangle(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.10)))
 
             Spacer(minLength: 32)
@@ -223,9 +240,9 @@ struct ContentView: View {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Palette.accent)
                             .accessibilityLabel("Valid coordinates")
                     }
-                }.padding(18).background(Palette.canvas, in: RoundedRectangle(cornerRadius: 12))
+                }.padding(18).background(Palette.input, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12)
-                        .stroke(coordinateFocused ? Palette.accent : (invalidInput ? Palette.danger : Palette.line),
+                        .stroke(coordinateFocused ? Palette.accent : (invalidInput ? Palette.danger : Palette.controlLine),
                                 lineWidth: coordinateFocused ? 2 : 1))
                 Text(invalidInput ? "Enter a valid latitude (−90…90) and longitude (−180…180)." :
                      "Latitude first. Use a minus sign for south or west.")
@@ -251,9 +268,9 @@ struct ContentView: View {
             if !model.ready && !model.busy {
                 Button("Retry iPhone setup", action: model.setup).buttonStyle(.link).tint(Palette.accent)
             }
-        }.padding(24).background(.white, in: RoundedRectangle(cornerRadius: 20))
+        }.padding(24).background(Palette.surface, in: RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).stroke(Palette.line))
-            .shadow(color: Palette.ink.opacity(0.025), radius: 16, y: 5)
+            .shadow(color: Color.black.opacity(0.16), radius: 16, y: 5)
     }
 
     private func metric(_ name: String, _ value: String) -> some View {
@@ -299,7 +316,7 @@ struct ContentView: View {
                 Spacer(minLength: 0)
                 if model.busy { ProgressView().controlSize(.small).tint(Palette.accent) }
             }
-        }.padding(24).background(.white, in: RoundedRectangle(cornerRadius: 20))
+        }.padding(24).background(Palette.surface, in: RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).stroke(Palette.line))
     }
 
@@ -324,7 +341,7 @@ struct ContentView: View {
                     Text(model.log.isEmpty ? "No diagnostic messages yet." : model.log)
                         .font(.system(size: 12, design: .monospaced)).foregroundStyle(Palette.ink)
                         .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding(16)
-                }.frame(height: 150).background(.white, in: RoundedRectangle(cornerRadius: 12))
+                }.frame(height: 150).background(Palette.surface, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line))
             }
         }
@@ -351,6 +368,6 @@ struct ContentView: View {
                     diagnostics
                 }.frame(maxWidth: 760).padding(32).frame(maxWidth: .infinity)
             }.background(Palette.canvas)
-        }.frame(minWidth: 940, minHeight: 740).preferredColorScheme(.light)
+        }.frame(minWidth: 940, minHeight: 740).preferredColorScheme(.dark)
     }
 }
