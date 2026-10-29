@@ -1,4 +1,4 @@
-# Cable Location 2.2.0
+# Cable Location 2.2.1
 
 A native Apple silicon Mac app for simulating a cable-connected iPhone's location.
 
@@ -115,8 +115,8 @@ connection failure. Native coordinate-validation checks also passed.
 
 ## Interface
 
-Version 2.2 uses a deep green device sidebar and a bright workspace, with larger
-type, clear input feedback, a compact session summary, and a resizable window.
+Version 2.2.1 uses a near-black device sidebar and a navy dark workspace, with pale
+text, blue accents, clear input feedback, and a compact session summary. The window resizes.
 The destination uses the generic **Latitude, Longitude** format hint. Errors and
 stale updates have explicit labels; Restore remains available with an empty or
 invalid destination. Command-R refreshes devices; Command-Return starts a valid
@@ -129,11 +129,11 @@ The cable-pin vector mark is in `Brand/Logo.svg`; the generated app icon is in
 'Cable Location.app/Contents/MacOS/CableLocation' --render-previews .build/previews
 ```
 
-## Release verification (2.2.0)
+## Release verification (2.2.1)
 
 Sixteen Python tests cover coordinate validation, session control, and cleanup.
-Sixty native assertions include 35 shared coordinate cases, UI state transitions,
-action availability, and text-color contrast. The release workflow builds on an
+Seventy-four native assertions include 35 shared coordinate cases, UI state transitions,
+action availability, 20 text-color pairs, and four control/focus contrast checks. The release workflow builds on an
 Apple silicon Mac, captures five native interface states, audits dependency
 advisories, and verifies the signature and ZIP checksum before publication.
 This update has not been tested with a physical iPhone.

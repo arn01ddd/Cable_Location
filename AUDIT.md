@@ -1,57 +1,45 @@
-# Release audit: 2.2.0
+# Release audit: 2.2.1
 
-Scope: native interface, destination validation, device selection, session
-presentation, restoration and cancellation, keyboard access, text contrast,
-dependency advisories, and release packaging.
+Scope: navy dark appearance, text and control contrast, native UI states, session
+regressions, dependency advisories, and Mac release packaging.
 
 ## Findings addressed
 
-- Small, subdued text and a large decorative graphic made the old interface hard
-  to scan. The redesign uses 12–17 point body/control text, a 36 point title,
-  clear labels, and a compact session summary.
-- Native placeholder styling reduced contrast even with a custom prompt color.
-  The generic format hint now uses the checked secondary text color. It leaves
-  the input empty and does not duplicate the field's accessibility label.
-- Successful restoration could leave the interface styled as failed. A restored
-  event now clears that state, including after a failed restoration attempt.
-- A live badge could persist after updates stopped. After five seconds without
-  an update, the interface displays a waiting state and cable/unlock guidance.
-- Per-operation restoration flags could outlive their operation. They are reset
-  at launch; failed process launches also remove their pipe callbacks.
-- Device actions now require membership in the detected USB device list.
-  Restore remains available when the destination is empty or invalid.
-- The fixed window did not adapt to long messages. The new window resizes with
-  a 940 × 740 minimum; the workspace and expanded Diagnostics scroll.
-  Reduced-motion preference disables the Diagnostics animation.
+- Fixed light backgrounds in destination, session, secondary buttons, and
+  Diagnostics. The native workspace now explicitly uses dark appearance.
+- Replaced green/light-theme tokens with near-black, navy, pale text, and blue
+  accents. Status, validation, and recovery use distinct readable colors.
+- Separated primary button text and fill colors. Reusing the normal text color
+  as the fill would produce incorrect contrast after switching to dark mode.
+- Replaced light-theme literals in contrast checks with the actual shared palette
+  tokens. Checks now cover 20 text pairs and four control/focus boundaries.
+- Strengthened input and enabled secondary-button borders to remain distinguishable
+  against dark panels. Disabled actions retain readable labels.
 
 ## Verification
 
-- Sixteen Python tests pass, including coordinate validation, USB-only discovery,
-  inherited route rejection, asynchronous refresh, reconnection, process cleanup,
-  and cancellation with both successful and failed restoration.
-- Sixty native assertions cover 35 shared coordinate cases, worker messages split
-  across reads, device selection, disabled actions, stale/live/restoring states,
-  restoration error recovery, and a frozen last-session timer.
-- Native checks require at least 4.5:1 contrast for ten normal-text color pairs,
-  including placeholder, sidebar, warning, input error, and disabled-button text.
-  Token checks do not replace a full accessibility conformance review.
-- Native renders cover empty, ready, active, error/diagnostics, and minimum-size
-  layouts. Ready, error, and minimum-size renders were reviewed before release;
-  final renders and checks are retained as GitHub Actions artifacts.
-- Publication requires dependency advisory scanning, Python tests, launcher
-  syntax, native compilation/checks, preview rendering, signature verification,
-  and ZIP checksum verification.
+- Sixteen backend tests cover coordinate validation, USB-only discovery,
+  asynchronous refresh, reconnection, cancellation, and restoration failure.
+- Seventy-four native assertions cover 35 shared coordinate cases, action
+  availability, device selection, stale/live/restoring status, restoration error
+  recovery, session timing, and contrast.
+- Normal-text pairs must reach 4.5:1. Input/secondary-control boundaries and focus
+  indication must reach 3:1. These checks do not constitute a complete
+  accessibility conformance review.
+- Native previews cover empty, ready, active, error/Diagnostics, and minimum-size
+  layouts. The dark renders are reviewed before release; the workflow retains
+  the previews as artifacts.
+- Release publication requires a clean dependency advisory scan, backend tests,
+  launcher syntax checks, native compilation/checks, preview rendering, signature
+  verification, and ZIP checksum verification.
 
-Buttons and inputs have accessibility labels or visible text. Device refresh
-and starting support keyboard shortcuts. Input focus has a visible border;
-status meaning uses text as well as color. Coordinates are passed as subprocess
-arguments without shell interpolation. The redesign adds no network services,
-coordinate storage, or dependency changes.
+The theme change introduces no backend behavior, dependencies, coordinate
+storage, or new network services. Existing keyboard shortcuts and accessibility
+labels remain available.
 
 ## Limits
 
-Automated device services are mocks. No physical iPhone is attached here, so
-this audit does not establish what a particular iOS app reports. Verify the
-blue dot and restoration in iPhone Maps. The app remains ad-hoc signed without
-Apple Developer ID notarization. Unplugging, closing the lid, crashing, or
-force quitting can interrupt restoration.
+No physical iPhone is attached to this environment; automated device services are
+mocks. Verify simulated and restored locations in iPhone Maps. The app is ad-hoc
+signed without Apple Developer ID notarization. A disconnected cable, closed
+lid, crash, or force quit may interrupt restoration.
