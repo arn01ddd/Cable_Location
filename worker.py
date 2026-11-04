@@ -8,6 +8,8 @@ import json
 import fcntl
 import hashlib
 import os
+import plistlib
+import shutil
 import signal
 import sys
 import tempfile
@@ -56,11 +58,73 @@ async def require_usb(udid: str):
         raise LocationError("Selected iPhone is not connected by USB. Reconnect and unlock it.")
 
 
+BUNDLED_DDI = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "ddi")
+DDI_FOLDERS = ("Xcode_iOS_DDI_Cryptex", "Xcode_iOS_DDI_Personalized")
+DEVELOPER_MODE_OFF = ("Developer Mode is off. On the iPhone open Settings → Privacy & Security → "
+                      "Developer Mode, turn it on, let the iPhone restart, tap Turn On, then click "
+                      "Start Location again.")
+
+
+def _build_id(manifest: str):
+    try:
+        with open(manifest, "rb") as f:
+            return plistlib.load(f).get("ProductBuildVersion")
+    except (OSError, plistlib.InvalidFileException, AttributeError):
+        return None
+
+
+def seed_disk_images(source: str = BUNDLED_DDI, cache=None) -> list[str]:
+    """Copy the developer disk images shipped inside the app into pymobiledevice3's cache,
+    so mounting does not download them. Personalisation is still signed online by Apple."""
+    if not os.path.isdir(source):
+        return []
+    if cache is None:
+        from pymobiledevice3.common import get_home_folder
+        cache = str(get_home_folder())
+    seeded = []
+    for name in DDI_FOLDERS:
+        src, dst = os.path.join(source, name), os.path.join(cache, name)
+        wanted = _build_id(os.path.join(src, "BuildManifest.plist"))
+        if not wanted or _build_id(os.path.join(dst, "BuildManifest.plist")) == wanted:
+            continue
+        # Copy payloads first and the manifest last, so a partial copy is never trusted.
+        for folder, _, files in os.walk(src):
+            target = os.path.join(dst, os.path.relpath(folder, src))
+            os.makedirs(target, exist_ok=True)
+            for file in files:
+                if folder != src or file != "BuildManifest.plist":
+                    shutil.copyfile(os.path.join(folder, file), os.path.join(target, file))
+        shutil.copyfile(os.path.join(src, "BuildManifest.plist"), os.path.join(dst, "BuildManifest.plist"))
+        seeded.append(name)
+    return seeded
+
+
+async def ensure_developer_mode(udid: str):
+    status = (await cli("amfi", "developer-mode-status", "--udid", udid, timeout=30)).strip().lower()
+    if status == "true":
+        return
+    if status != "false":
+        raise LocationError(f"Unexpected Developer Mode status: {status[:80] or 'empty'}.")
+    try:
+        # Makes the Developer Mode switch appear in Settings without Xcode.
+        await cli("amfi", "reveal-developer-mode", "--udid", udid, timeout=30)
+    except LocationError as exc:
+        emit("log", message=f"Could not reveal the Developer Mode switch: {exc}")
+    raise LocationError(DEVELOPER_MODE_OFF)
+
+
 async def prepare(udid: str):
     await require_usb(udid)
     emit("status", message="Unlock your iPhone and accept Trust if prompted…")
     await cli("lockdown", "pair", "--udid", udid)
-    emit("status", message="Preparing developer support. First use may download files…")
+    emit("status", message="Checking Developer Mode…")
+    await ensure_developer_mode(udid)
+    try:
+        if seed_disk_images():
+            emit("log", message="Using the developer disk image bundled with the app.")
+    except Exception as exc:  # the mounter can still download the image
+        emit("log", message=f"Bundled developer disk image unavailable: {exc}")
+    emit("status", message="Preparing developer support. This needs internet for Apple's signature…")
     await cli("mounter", "auto-mount", "--udid", udid, timeout=900)
 
 

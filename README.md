@@ -1,4 +1,4 @@
-# Cable Location 2.3.0
+# Cable Location 2.4.0
 
 A native Apple silicon Mac app for simulating a cable-connected iPhone's location.
 
@@ -8,20 +8,32 @@ are in [AUDIT.md](AUDIT.md).
 
 ## Open the app
 
-Extract the release ZIP and double-click **Cable Location.app**. When building
-from source, run `python3 build_app.py` on your Mac first. Your existing private Python
-environment is reused when available. If you move the app elsewhere, its first
-launch creates a private runtime in `~/Library/Application Support/Cable Location/`.
-Python 3.10 or newer must be installed on the Mac; first setup needs internet.
+Release 2.4.0 is self-contained: Python, the iPhone support library
+(`pymobiledevice3`), and Apple's developer disk images are inside the app. Nothing
+else needs to be installed: no Python, Homebrew, or Xcode.
 
-1. Connect the iPhone using a data-capable USB-C cable, unlock it, and trust the Mac.
-2. Enable **Settings → Privacy & Security → Developer Mode** on the iPhone.
-3. Click **Refresh** and select your USB iPhone if more than one is attached.
-4. Choose a destination: click the map to drop a pin, pick a saved or recent place
+**You need:** an Apple silicon Mac (M1 or newer) with macOS 14 or later, an iPhone
+with a passcode, a USB cable that carries data, and internet access when a session
+starts (Apple signs the developer disk image for each iPhone).
+
+1. Download **CableLocation-macOS-arm64.zip** from the latest release, double-click it,
+   and drag **Cable Location.app** into **Applications**.
+2. Open the app. The first time, macOS blocks it because it is not notarized: open
+   **System Settings → Privacy & Security**, click **Open Anyway** next to Cable
+   Location, and confirm. This is needed once.
+3. Connect the iPhone by USB, unlock it, and tap **Trust**.
+4. Click **Refresh** and select your USB iPhone if more than one is attached.
+5. Choose a destination: click the map to drop a pin, pick a saved or recent place
    in the sidebar, or paste coordinates or a Google/Apple Maps link into the field.
    Use decimal degrees, latitude first, with a minus sign for south or west.
-5. Click **Start Location**. Keep the cable connected and the Mac lid open.
-6. Click **Stop & Restore** when finished. Verify the real location in iPhone Maps.
+6. Click **Start Location**. Keep the cable connected and the Mac lid open. If
+   Developer Mode is off, the app makes its switch appear on the iPhone and says so:
+   turn on **Settings → Privacy & Security → Developer Mode**, let the iPhone
+   restart, tap **Turn On**, then click Start Location again.
+7. Click **Stop & Restore** when finished. Verify the real location in iPhone Maps.
+
+If the app says to move it to Applications, macOS is running it from a hidden
+read-only copy; drag it into Applications and open it again.
 
 Commas, whitespace, parentheses, and negative coordinates are accepted, as are
 hemisphere notation (`33.8568° S, 151.2153° E`), `geo:` URIs, and Google Maps or
@@ -65,17 +77,14 @@ cleanup. Do not run other location tools against the same phone simultaneously.
 
 ## Setup troubleshooting
 
-- If Python is missing, install the macOS universal installer from
-  [python.org](https://www.python.org/downloads/macos/), then reopen the app.
-- If setup fails while building a package, install Apple's Command Line Tools
-  with `xcode-select --install`, then click **Retry setup**.
-- If macOS blocks this locally built, ad-hoc-signed app after downloading a ZIP,
-  use Finder's Open action or **System Settings → Privacy & Security → Open Anyway**
-  for this app. It is not notarized with an Apple Developer account.
+- If macOS blocks the app after downloading the ZIP, use **System Settings →
+  Privacy & Security → Open Anyway**. It is ad-hoc signed and not notarized with an
+  Apple Developer account.
+- If setup reports damaged iPhone support, download and extract the ZIP again.
 - If no device appears, unlock it, check that Finder sees it, and try another
   data-capable cable or port.
-- If Developer Mode is missing, connect the phone to Xcode's Devices and Simulators
-  window first. Complete the iPhone restart and Developer Mode confirmation.
+- If the Developer Mode switch is missing, click Start Location once with the iPhone
+  unlocked; the app reveals it. Complete the iPhone restart and confirmation.
 - If the target app ignores the position, check Maps, grant location permission,
   and reopen that app. This changes simulated GPS, not IP address or account region.
 
@@ -100,10 +109,11 @@ executable, run it with `zsh Launch.command`.
 - `NativeApp/CableLocationApp.swift`: native app lifecycle and process controller.
 - `NativeApp/Interface.swift`: SwiftUI workspace, map, saved places, and design tokens.
 - `NativeApp/NativeChecks.swift`: native state/contrast checks and preview renderer.
-- `NativeApp/bootstrap.sh`: private Python runtime preparation.
+- `NativeApp/bootstrap.sh`: checks the bundled runtime (or prepares a venv for source builds).
 - `worker.py`: async USB session, one-second refresh, reconnect, and restoration.
 - `cable_location.py`: Terminal interface and shared coordinate validation.
-- `build_app.py`: rebuild the Apple silicon app using Xcode Command Line Tools.
+- `build_app.py`: rebuild the Apple silicon app with Xcode Command Line Tools, embedding a
+  pinned standalone Python, `pymobiledevice3`, and the developer disk images.
 - `tests/`: coordinate, refresh, cleanup, and controller tests.
 
 Run tests with `python3 -m unittest discover -s tests` and rebuild with
@@ -145,12 +155,12 @@ tiles are replaced by a grid in offscreen renders):
 'Cable Location.app/Contents/MacOS/CableLocation' --render-previews .build/previews
 ```
 
-## Release verification (2.3.0)
+## Release verification (2.4.0)
 
-Sixteen Python tests cover coordinate validation, session control, and cleanup.
-139 native assertions cover 35 shared coordinate cases, map-link and hemisphere
-extraction, saved/recent place persistence, UI state transitions, action
-availability, 30 text-color pairs, and six control/focus contrast checks. The
-release workflow builds on an Apple silicon Mac, captures five native interface
-states, audits dependency advisories, and verifies the signature and ZIP checksum
-before publication. This update has not been tested with a physical iPhone.
+Twenty-two Python tests cover coordinate validation, session control, cleanup,
+Developer Mode detection, and bundled disk-image seeding. 139 native assertions
+cover coordinates, map links, saved places, UI states, and contrast. The release
+workflow builds on an Apple silicon Mac, checks that the bundled runtime works with
+no Python on `PATH` and an empty home folder, audits dependency advisories, and
+verifies the signature and ZIP checksum. This update has not been tested with a
+physical iPhone or on a Mac that has never run Cable Location.

@@ -154,6 +154,65 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(events[-1], "restored")
 
 
+class DeveloperSetupTests(unittest.IsolatedAsyncioTestCase):
+    def make_image(self, root, name, build):
+        import plistlib
+        folder = Path(root) / name
+        (folder / "sub").mkdir(parents=True)
+        (folder / "Image.dmg").write_bytes(b"dmg-" + build.encode())
+        (folder / "sub/extra").write_bytes(b"x")
+        (folder / "BuildManifest.plist").write_bytes(plistlib.dumps({"ProductBuildVersion": build}))
+
+    def test_bundled_images_seed_cache_and_skip_when_current(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as cache:
+            self.make_image(src, "Xcode_iOS_DDI_Cryptex", "27A1")
+            self.make_image(src, "Xcode_iOS_DDI_Personalized", "27A1")
+            self.assertEqual(worker.seed_disk_images(src, cache), list(worker.DDI_FOLDERS))
+            copied = Path(cache) / "Xcode_iOS_DDI_Cryptex"
+            self.assertEqual((copied / "Image.dmg").read_bytes(), b"dmg-27A1")
+            self.assertTrue((copied / "sub/extra").exists())
+            self.assertEqual(worker.seed_disk_images(src, cache), [])
+
+    def test_stale_or_broken_cache_is_replaced(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as cache:
+            self.make_image(src, "Xcode_iOS_DDI_Cryptex", "27B2")
+            self.make_image(cache, "Xcode_iOS_DDI_Cryptex", "27A1")
+            self.assertEqual(worker.seed_disk_images(src, cache), ["Xcode_iOS_DDI_Cryptex"])
+            self.assertEqual((Path(cache) / "Xcode_iOS_DDI_Cryptex/Image.dmg").read_bytes(), b"dmg-27B2")
+            (Path(cache) / "Xcode_iOS_DDI_Cryptex/BuildManifest.plist").write_bytes(b"not a plist")
+            self.assertEqual(worker.seed_disk_images(src, cache), ["Xcode_iOS_DDI_Cryptex"])
+
+    def test_missing_bundle_is_ignored(self):
+        self.assertEqual(worker.seed_disk_images("/nonexistent/ddi", "/nonexistent/cache"), [])
+
+    async def test_developer_mode_on_passes(self):
+        with patch.object(worker, "cli", AsyncMock(return_value="true\n")) as cli:
+            await worker.ensure_developer_mode("abc")
+        cli.assert_awaited_once()
+
+    async def test_developer_mode_off_reveals_switch_and_explains(self):
+        for reveal_fails in (False, True):
+            with self.subTest(reveal_fails=reveal_fails):
+                calls = []
+
+                async def fake(*args, **kwargs):
+                    calls.append(args[:2])
+                    if args[1] == "reveal-developer-mode" and reveal_fails:
+                        raise worker.LocationError("denied")
+                    return "false\n"
+                with patch.object(worker, "cli", fake), patch.object(worker, "emit"):
+                    with self.assertRaisesRegex(worker.LocationError, "Developer Mode is off"):
+                        await worker.ensure_developer_mode("abc")
+                self.assertEqual(calls, [("amfi", "developer-mode-status"), ("amfi", "reveal-developer-mode")])
+
+    async def test_unexpected_status_is_an_error(self):
+        with patch.object(worker, "cli", AsyncMock(return_value="garbage")):
+            with self.assertRaisesRegex(worker.LocationError, "Unexpected Developer Mode status"):
+                await worker.ensure_developer_mode("abc")
+
+
 if __name__ == "__main__":
     unittest.main()
 

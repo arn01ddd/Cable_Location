@@ -1,4 +1,4 @@
-# Release audit: 2.3.0
+# Release audit: 2.4.0
 
 Scope: redesigned dark interface, map destination picker, saved and recent places,
 map-link parsing, contrast, persistence, session regressions, dependency
@@ -6,6 +6,19 @@ advisories, and Mac release packaging.
 
 ## Findings addressed
 
+- 2.4.0 embeds a relocatable CPython 3.14.8 (python-build-standalone 20261013, pinned
+  by SHA-256), `pymobiledevice3==11.40.2` installed from binary wheels only, and the
+  Cryptex and Personalized developer disk images (build checked against
+  pymobiledevice3's `LATEST_DDI_BUILD_ID`). Unused Tcl/Tk, tests, IDLE, pip, and
+  headers are removed. All embedded binaries are ad-hoc signed and bytecode is
+  precompiled, so nothing is written into the signed bundle at run time.
+- The bundled runtime clears the download quarantine flag from the app's own files
+  after the user approves opening it, so macOS does not block the embedded helper.
+  A translocated (read-only, unmoved) copy is detected and the user is told to move it.
+- Bundled disk images are copied into pymobiledevice3's cache (payloads first,
+  manifest last) only when the cached build differs; failures fall back to download.
+- Developer Mode is checked before mounting; when off, the switch is revealed via
+  AMFI and the user gets exact instructions instead of a mount error.
 - `CFBundleVersion` was hard-coded to `6` for every release, so macOS could not
   distinguish builds. It now follows `VERSION`.
 - The README stated that no coordinate history is stored. Recents and saved places
@@ -24,8 +37,9 @@ advisories, and Mac release packaging.
 
 ## Verification
 
-- Sixteen backend tests (coordinate validation, USB-only discovery, refresh,
-  reconnection, cancellation, restoration failure) pass.
+- Twenty-two backend tests (coordinate validation, USB-only discovery, refresh,
+  reconnection, cancellation, restoration failure, Developer Mode detection,
+  bundled disk-image seeding) pass.
 - 139 native assertions: 35 shared coordinate cases, 17 extraction cases (Google
   `@`/`!3d!4d`/`q=`/`query=`, Apple `ll=`/`coordinate=`, `geo:`, N/S/E/W, invalid
   links), saved/recent persistence and limits, clipboard paste, live/stale state,

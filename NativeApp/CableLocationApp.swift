@@ -157,6 +157,9 @@ final class LocationModel: ObservableObject {
     }
     let resources = Bundle.main.resourceURL!
     lazy var runtime: URL = {
+        // Release builds carry their own Python and iPhone support inside the app.
+        let bundled = Bundle.main.resourceURL!.appendingPathComponent("python")
+        if FileManager.default.isExecutableFile(atPath: bundled.appendingPathComponent("bin/python").path) { return bundled }
         let adjacent = Bundle.main.bundleURL.deletingLastPathComponent().appendingPathComponent(".venv")
         if FileManager.default.isExecutableFile(atPath: adjacent.appendingPathComponent("bin/python").path) { return adjacent }
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -248,6 +251,12 @@ final class LocationModel: ObservableObject {
             clockTimer = timer
         }
         failed = false
+        if Bundle.main.bundlePath.contains("/AppTranslocation/") {
+            // macOS runs a downloaded app from a hidden read-only copy until it is moved.
+            failed = true
+            status = "Move Cable Location to the Applications folder, then open it again."
+            return
+        }
         status = "Checking iPhone support…"
         launch(executable: URL(fileURLWithPath: "/bin/zsh"),
                arguments: [resources.appendingPathComponent("bootstrap.sh").path, runtime.path, resources.path],

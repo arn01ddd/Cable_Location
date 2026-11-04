@@ -1,32 +1,22 @@
-Cable Location 2.3.0 is a redesigned dark workspace with a map and saved places.
+Cable Location 2.4.0 is self-contained: extract, move to Applications, and open.
 
 **New**
-- Interactive dark map: click to drop a pin and see the destination before you start.
-- Saved places: star a destination (⌘S), name it, and reuse it from the sidebar.
-- Recent destinations: the last five started locations, one click to reuse.
-- Paste Google Maps, Apple Maps, and `geo:` links, or N/S/E/W notation; they are
-  converted to decimal coordinates automatically (⇧⌘V pastes from the clipboard).
-- The last destination is remembered between launches.
-- Live session indicator with a pulsing green status and a "last update" tile.
-- Copy button for Diagnostics, ⌘. to stop and restore, hover feedback on controls.
+- Python 3.14, the iPhone support library, and Apple's developer disk images are
+  built into the app. No Python, Homebrew, Xcode, or first-run downloads.
+- Developer Mode: if it is off, the app makes the switch appear in the iPhone's
+  Settings and explains the next step. Xcode is no longer needed for this.
+- The app tells you to move it to Applications when macOS runs it from a hidden
+  read-only copy.
 
-**Redesign**
-- Graphite near-black theme with sky-blue actions, green live state, amber warnings.
-- Reorganised sidebar: device card, saved and recent places, collapsible setup checklist.
-- Session tiles for duration, accepted updates, and last update.
+**Requirements**
+- Apple silicon Mac (M1 or newer), macOS 14 or later.
+- iPhone with a passcode and a data-capable USB cable.
+- Internet when a session starts: Apple signs the developer disk image per device.
 
-**Fixes**
-- The bundle build number now follows the release version, so macOS treats each
-  release as a distinct update (it was fixed at 6).
+**First launch**
+The app is ad-hoc signed and not notarized. The first time, open **System Settings →
+Privacy & Security** and click **Open Anyway** next to Cable Location.
 
-Release verification includes 16 backend tests, 139 native assertions (map-link
-parsing, place persistence, 30 text contrast pairs), five native UI previews, a
-dependency advisory audit, and signature/checksum checks.
-
-Download **CableLocation-macOS-arm64.zip**, extract it, and open **Cable Location.app**.
-Requires an Apple silicon Mac with macOS 14 or later and Python 3.10 or later.
-First launch downloads the private Python backend. The app is ad-hoc signed
-without Apple Developer ID notarization. Saved places stay on your Mac.
-
-No physical iPhone was available for this update. Verify location and restoration
-in Maps on your iPhone.
+The download is larger (about 120 MB) because the runtime is included. Saved places
+stay on your Mac. No physical iPhone was available for this update; verify location
+and restoration in Maps on your iPhone.

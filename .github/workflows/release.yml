@@ -3,7 +3,7 @@ name: Audit, build, and release
 on:
   push:
     branches: [main, ui-refresh, navy-theme]
-    paths: [VERSION, 'NativeApp/**', build_app.py, '.github/workflows/release.yml']
+    paths: [VERSION, 'NativeApp/**', build_app.py, worker.py, cable_location.py, requirements.txt, '.github/workflows/release.yml']
   workflow_dispatch:
 
 permissions:
@@ -38,6 +38,14 @@ jobs:
         run: zsh -n Launch.command NativeApp/bootstrap.sh
       - name: Build app and run native coordinate checks
         run: python3 build_app.py
+      - name: Check self-contained runtime in a clean environment
+        run: |
+          r='Cable Location.app/Contents/Resources'
+          env -i HOME="$RUNNER_TEMP/home" PATH=/usr/bin:/bin /bin/zsh "$r/bootstrap.sh" "$PWD/$r/python" "$PWD/$r"
+          env -i HOME="$RUNNER_TEMP/home" PATH=/usr/bin:/bin "$r/python/bin/python" "$r/backend/worker.py" list
+          test -f "$r/ddi/Xcode_iOS_DDI_Cryptex/BuildManifest.plist"
+          test -f "$r/ddi/Xcode_iOS_DDI_Personalized/BuildManifest.plist"
+          codesign --verify --deep --strict 'Cable Location.app'
       - name: Render native UI states
         run: |
           'Cable Location.app/Contents/MacOS/CableLocation' --render-previews .build/previews

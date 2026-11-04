@@ -346,7 +346,7 @@ struct ContentView: View {
             }.buttonStyle(.plain).accessibilityLabel(guideVisible ? "Hide setup checklist" : "Show setup checklist")
             if guideVisible {
                 guideStep(1, "Connect & trust", "Unlock your iPhone and trust this Mac.")
-                guideStep(2, "Enable Developer Mode", "Settings → Privacy & Security.")
+                guideStep(2, "Enable Developer Mode", "Click Start once; the switch then appears in Settings → Privacy & Security.")
                 guideStep(3, "Verify in Maps", "Check the blue dot on your iPhone.")
             }
         }.padding(14).background(Palette.surface.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
