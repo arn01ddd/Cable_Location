@@ -25,7 +25,7 @@ plist = {
     "CFBundleDisplayName": "Cable Location",
     "CFBundlePackageType": "APPL",
     "CFBundleShortVersionString": app_version,
-    "CFBundleVersion": "6",
+    "CFBundleVersion": app_version,
     "LSMinimumSystemVersion": "14.0",
     "NSHighResolutionCapable": True,
     "NSHumanReadableCopyright": "Cable Location",
@@ -39,7 +39,7 @@ subprocess.run([
     "xcrun", "swiftc", "-swift-version", "5", "-O", "-parse-as-library",
     "-target", "arm64-apple-macosx14.0", "-module-cache-path", str(cache),
     str(root / "NativeApp/CableLocationApp.swift"), str(root / "NativeApp/Interface.swift"),
-    str(root / "NativeApp/NativeChecks.swift"), "-o", str(binary / "CableLocation"),
+    str(root / "NativeApp/NativeChecks.swift"), "-framework", "MapKit", "-o", str(binary / "CableLocation"),
 ], check=True)
 iconset = cache / "AppIcon.iconset"
 iconmaker = cache / "make_icon"

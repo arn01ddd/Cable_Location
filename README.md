@@ -1,4 +1,4 @@
-# Cable Location 2.2.1
+# Cable Location 2.3.0
 
 A native Apple silicon Mac app for simulating a cable-connected iPhone's location.
 
@@ -17,14 +17,25 @@ Python 3.10 or newer must be installed on the Mac; first setup needs internet.
 1. Connect the iPhone using a data-capable USB-C cable, unlock it, and trust the Mac.
 2. Enable **Settings → Privacy & Security → Developer Mode** on the iPhone.
 3. Click **Refresh** and select your USB iPhone if more than one is attached.
-4. Paste a coordinate pair in the field marked **Latitude, Longitude**.
+4. Choose a destination: click the map to drop a pin, pick a saved or recent place
+   in the sidebar, or paste coordinates or a Google/Apple Maps link into the field.
    Use decimal degrees, latitude first, with a minus sign for south or west.
 5. Click **Start Location**. Keep the cable connected and the Mac lid open.
 6. Click **Stop & Restore** when finished. Verify the real location in iPhone Maps.
 
-Commas, whitespace, parentheses, and negative coordinates are accepted. Latitude
-must be within −90…90 and longitude within −180…180. Decimal precision is retained
-up to the underlying double-precision location API.
+Commas, whitespace, parentheses, and negative coordinates are accepted, as are
+hemisphere notation (`33.8568° S, 151.2153° E`), `geo:` URIs, and Google Maps or
+Apple Maps links that contain coordinates. Links and map clicks are converted to
+canonical decimal degrees rounded to six places (about 10 cm). Latitude must be
+within −90…90 and longitude within −180…180. Typed coordinates keep their precision.
+
+## Saved and recent places
+
+Click the star beside the field (Command-S) to name and save the current
+destination. Saved places appear in the sidebar; right-click one to copy or remove
+it. The last five started destinations appear under **Recent** and can be cleared.
+Places, recents, and the last destination are stored only in this Mac's user
+preferences for the app (`local.cablelocation.mac`) and are never uploaded.
 
 ## Sustained sessions
 
@@ -42,7 +53,7 @@ explanation for the short-lived location; other apps and iOS can also affect it.
 The timer, accepted refresh count, and last-update age show the service activity.
 They do not read the phone's actual position. Check the blue dot in **Maps on the
 iPhone** to verify what an app sees. The app's Diagnostics panel shows errors and
-reconnection activity without storing a coordinate history.
+reconnection activity and can be copied for troubleshooting.
 
 ## Restore real location
 
@@ -87,7 +98,7 @@ executable, run it with `zsh Launch.command`.
 ## Source and verification
 
 - `NativeApp/CableLocationApp.swift`: native app lifecycle and process controller.
-- `NativeApp/Interface.swift`: SwiftUI workspace and design tokens.
+- `NativeApp/Interface.swift`: SwiftUI workspace, map, saved places, and design tokens.
 - `NativeApp/NativeChecks.swift`: native state/contrast checks and preview renderer.
 - `NativeApp/bootstrap.sh`: private Python runtime preparation.
 - `worker.py`: async USB session, one-second refresh, reconnect, and restoration.
@@ -115,26 +126,31 @@ connection failure. Native coordinate-validation checks also passed.
 
 ## Interface
 
-Version 2.2.1 uses a near-black device sidebar and a navy dark workspace, with pale
-text, blue accents, clear input feedback, and a compact session summary. The window resizes.
-The destination uses the generic **Latitude, Longitude** format hint. Errors and
-stale updates have explicit labels; Restore remains available with an empty or
-invalid destination. Command-R refreshes devices; Command-Return starts a valid
-session. Diagnostics expands below the session summary.
+Version 2.3.0 is a redesigned graphite dark workspace. A sidebar holds the device
+card, saved and recent places, and a collapsible setup checklist. The main column
+shows a dark map with the destination pin, the destination field with paste and
+save buttons, session tiles (duration, accepted updates, last update), and
+Diagnostics. A pulsing green status marks a live session; amber marks attention.
+Map clicks and destination changes are locked while a session runs.
+
+Keyboard shortcuts: Command-Return start, Command-Period stop and restore,
+Command-R refresh devices, Shift-Command-V paste coordinates or a map link,
+Command-S save the place.
 
 The cable-pin vector mark is in `Brand/Logo.svg`; the generated app icon is in
-`Brand/AppIcon.png`. Render five native interface states without a phone:
+`Brand/AppIcon.png`. Render five native interface states without a phone (map
+tiles are replaced by a grid in offscreen renders):
 
 ```sh
 'Cable Location.app/Contents/MacOS/CableLocation' --render-previews .build/previews
 ```
 
-## Release verification (2.2.1)
+## Release verification (2.3.0)
 
 Sixteen Python tests cover coordinate validation, session control, and cleanup.
-Seventy-four native assertions include 35 shared coordinate cases, UI state transitions,
-action availability, 20 text-color pairs, and four control/focus contrast checks. The release workflow builds on an
-Apple silicon Mac, captures five native interface states, audits dependency
-advisories, and verifies the signature and ZIP checksum before publication.
-This update has not been tested with a physical iPhone.
-
+139 native assertions cover 35 shared coordinate cases, map-link and hemisphere
+extraction, saved/recent place persistence, UI state transitions, action
+availability, 30 text-color pairs, and six control/focus contrast checks. The
+release workflow builds on an Apple silicon Mac, captures five native interface
+states, audits dependency advisories, and verifies the signature and ZIP checksum
+before publication. This update has not been tested with a physical iPhone.
